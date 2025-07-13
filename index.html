@@ -150,18 +150,6 @@
                 
                 startPage.classList.add('hidden');
                 chatPage.classList.remove('hidden');
-
-                openFullscreen();
-
-                // Style chat for fullscreen
-                chatPage.classList.remove('max-w-md', 'mx-4');
-                chatPage.classList.add('w-screen', 'h-screen');
-                chatBox.classList.remove('h-[70vh]', 'rounded-2xl');
-                chatBox.classList.add('h-full');
-                
-                // Remove rounded corners for fullscreen view
-                chatHeader.classList.remove('rounded-t-2xl');
-                inputArea.classList.remove('rounded-b-2xl');
             });
 
             // 2. Start the actual chat conversation
@@ -229,20 +217,6 @@
 
 
             // --- Helper Functions ---
-
-            /**
-             * Opens the browser in fullscreen mode for an immersive mobile experience.
-             */
-            function openFullscreen() {
-                const elem = document.documentElement;
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) { /* Safari */
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) { /* IE11 */
-                    elem.msRequestFullscreen();
-                }
-            }
 
             /**
              * Adds a user or customer message to the chat window.
