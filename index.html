@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- This viewport tag is crucial for responsive design on mobile devices -->
+    <!-- This viewport tag is crucial for responsive design. It tells the browser to set the width of the page to the device's screen width and to set the initial zoom level. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Chat Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,11 +11,11 @@
         /* Custom styles for the app */
         body {
             font-family: 'Inter', sans-serif;
-            /* Prevent body scroll when chat is active, important for the fullscreen mobile experience */
+            /* Prevent body scroll when chat is active, which is especially important for the fullscreen mobile experience to feel self-contained. */
             overflow: hidden; 
         }
 
-        /* Custom scrollbar for chat window */
+        /* Custom scrollbar for chat window (for desktop browsers) */
         #chat-window::-webkit-scrollbar {
             width: 6px;
         }
@@ -30,9 +30,14 @@
         #chat-window::-webkit-scrollbar-thumb:hover {
             background: #475569;
         }
+
+        /* MOBILE ENHANCEMENT: This prevents the 'pull-to-refresh' action on mobile browsers when scrolling at the top of the chat, making the app feel more native. */
+        #chat-window {
+            overscroll-behavior-y: contain;
+        }
         
-        /* Transition for fullscreen effect */
-        #chat-container {
+        /* Smooth transition for layout changes */
+        #chat-page {
             transition: all 0.3s ease-in-out;
         }
     </style>
@@ -67,11 +72,12 @@
     </div>
 
 
-    <!-- Chat Container (initially hidden) -->
-    <div id="chat-container" class="w-full max-w-md mx-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl flex flex-col h-[70vh] transition-all duration-300">
+    <!-- Chat Page Container (initially hidden) -->
+    <div id="chat-page" class="w-full max-w-md mx-4 hidden">
+        <!-- The flexbox layout is key to responsiveness. The header and footer have fixed heights, while the chat window grows to fill the remaining space. -->
+        <div id="chat-box" class="bg-white rounded-2xl shadow-2xl flex flex-col h-[70vh] transition-all duration-300">
             <!-- Header -->
-            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex items-center shadow-md flex-shrink-0">
+            <div id="chat-header" class="bg-slate-800 text-white p-4 rounded-t-2xl flex items-center shadow-md flex-shrink-0">
                 <div class="relative">
                     <img class="w-10 h-10 rounded-full" src="https://placehold.co/100x100/7e22ce/white?text=C" alt="Customer Avatar">
                     <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-800 rounded-full"></span>
@@ -82,19 +88,24 @@
                 </div>
             </div>
 
-            <!-- Chat Window -->
+            <!-- Chat Window: flex-1 allows this element to grow and shrink, which is vital for accommodating the on-screen keyboard on mobile without hiding the input field. -->
             <div id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-4">
                 <!-- Messages will be appended here -->
             </div>
 
             <!-- Input Area -->
             <div id="input-area" class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex-shrink-0">
-                <!-- Message Form -->
-                <form id="message-form">
+                <!-- Start Button Container -->
+                <div id="start-chat-container" class="text-center">
+                    <button id="start-chat-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-lg focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                        Start Chat
+                    </button>
+                </div>
+                <!-- Message Form (initially hidden) -->
+                <form id="message-form" class="hidden">
                     <div class="flex items-center space-x-3">
                         <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off" class="w-full bg-slate-200 border-transparent rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         <button type="submit" class="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 transition-all duration-300 shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-300">
-                            <!-- Updated Send Icon -->
                             <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M3.3938 2.20468C3.70395 1.96828 4.12324 1.93374 4.4679 2.1162L21.4679 11.1162C21.7953 11.2895 22 11.6296 22 12C22 12.3704 21.7953 12.7105 21.4679 12.8838L4.4679 21.8838C4.12324 22.0662 3.70395 22.0317 3.3938 21.7953C3.08365 21.5589 2.93922 21.1637 3.02382 20.7831L4.97561 12L3.02382 3.21692C2.93922 2.83623 3.08365 2.44109 3.3938 2.20468ZM6.80218 13L5.44596 19.103L16.9739 13H6.80218ZM16.9739 11H6.80218L5.44596 4.89699L16.9739 11Z" fill="#ffffff"></path> </g></svg>
                         </button>
                     </div>
@@ -111,7 +122,13 @@
             const customQuestionInput = document.getElementById('custom-question-input');
             const proceedBtn = document.getElementById('proceed-btn');
             
-            const chatContainer = document.getElementById('chat-container');
+            const chatPage = document.getElementById('chat-page');
+            const chatBox = document.getElementById('chat-box');
+            const chatHeader = document.getElementById('chat-header');
+            const inputArea = document.getElementById('input-area');
+            const startChatContainer = document.getElementById('start-chat-container');
+            const startChatBtn = document.getElementById('start-chat-btn');
+
             const messageForm = document.getElementById('message-form');
             const messageInput = document.getElementById('message-input');
             const chatWindow = document.getElementById('chat-window');
@@ -124,38 +141,43 @@
 
             // --- Event Listeners ---
 
-            // 1. Proceed from start page to chat
+            // 1. Proceed from start page to chat page
             proceedBtn.addEventListener('click', () => {
                 customerQuestion = customQuestionInput.value.trim();
-                // Use a default question if the input is empty
                 if (customerQuestion === "") {
                     customerQuestion = "Hi, can you tell me more about your products?";
                 }
                 
-                // Hide start page and show chat
                 startPage.classList.add('hidden');
-                chatContainer.classList.remove('hidden');
+                chatPage.classList.remove('hidden');
 
-                // --- BROWSER FULLSCREEN ---
                 openFullscreen();
 
-                // Expand UI to fill the viewport
-                const chatBox = chatContainer.querySelector('.flex-col');
-                chatContainer.classList.remove('max-w-md', 'mx-4');
-                chatContainer.classList.add('w-screen', 'h-screen');
+                // Style chat for fullscreen
+                chatPage.classList.remove('max-w-md', 'mx-4');
+                chatPage.classList.add('w-screen', 'h-screen');
                 chatBox.classList.remove('h-[70vh]', 'rounded-2xl');
-                chatBox.classList.add('h-full', 'rounded-none');
+                chatBox.classList.add('h-full');
                 
+                // Remove rounded corners for fullscreen view
+                chatHeader.classList.remove('rounded-t-2xl');
+                inputArea.classList.remove('rounded-b-2xl');
+            });
+
+            // 2. Start the actual chat conversation
+            startChatBtn.addEventListener('click', () => {
+                startChatContainer.classList.add('hidden');
+                messageForm.classList.remove('hidden');
                 messageInput.focus();
 
                 // Simulate customer writing the predetermined message after a delay
-                const randomDelay = Math.random() * (4000 - 2000) + 2000; // 2-4 seconds
+                const randomDelay = Math.random() * (3000 - 1500) + 1500; // 1.5-3 seconds
                 setTimeout(() => {
                     addMessage('customer', customerQuestion);
                 }, randomDelay);
             });
 
-            // 2. Send a message
+            // 3. Send a message
             messageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const messageText = messageInput.value.trim();
@@ -164,16 +186,13 @@
                     addMessage('user', messageText);
                     messageInput.value = '';
 
-                    // If this is the first reply, trigger the customer thank you and reward notification
                     if (!hasUserReplied) {
                         hasUserReplied = true;
                         
-                        // Simulate customer replying with thanks after a short delay
                         setTimeout(() => {
                             addMessage('customer', "Great, thank you so much for your help!");
                         }, 1200);
 
-                        // Show the push notification after the customer's reply
                         setTimeout(() => {
                            showPushNotification("You earned a reward for helping customers!");
                         }, 2500);
@@ -185,10 +204,10 @@
             // --- Helper Functions ---
 
             /**
-             * Opens the browser in fullscreen mode.
+             * Opens the browser in fullscreen mode for an immersive mobile experience.
              */
             function openFullscreen() {
-                const elem = document.documentElement; // Get the root element (the whole page)
+                const elem = document.documentElement;
                 if (elem.requestFullscreen) {
                     elem.requestFullscreen();
                 } else if (elem.webkitRequestFullscreen) { /* Safari */
