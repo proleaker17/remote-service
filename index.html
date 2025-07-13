@@ -200,14 +200,31 @@
                 }
             });
 
-            // 4. MOBILE ENHANCEMENT: Ensure text input is visible when keyboard appears
-            messageInput.addEventListener('focus', () => {
-                // When the input is focused (tapped on mobile), the on-screen keyboard
-                // appears. We wait a moment for the keyboard animation to finish,
-                // then scroll the input area into view to ensure it isn't hidden.
+            // 4. MOBILE ENHANCEMENT: This is a more robust way to ensure the input field is visible when the on-screen keyboard appears.
+            const scrollInputIntoView = () => {
+                // A small delay helps ensure the browser has finished its layout adjustments
+                // after the keyboard has appeared and the viewport has resized.
                 setTimeout(() => {
                     inputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                }, 300);
+                }, 100);
+            };
+
+            messageInput.addEventListener('focus', () => {
+                // On focus, we immediately try to scroll the input into view.
+                scrollInputIntoView();
+                // For modern mobile browsers, we listen for the visual viewport to resize.
+                // This is the most reliable way to react to the on-screen keyboard.
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', scrollInputIntoView);
+                }
+            });
+
+            messageInput.addEventListener('blur', () => {
+                // When the input loses focus, we remove the resize listener to prevent
+                // unnecessary scrolling when the keyboard is dismissed.
+                if (window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', scrollInputIntoView);
+                }
             });
 
 
